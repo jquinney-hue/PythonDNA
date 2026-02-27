@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Input Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #f8fafc; /* slate-50 */
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        .green-keyword {
+            color: #10b981; /* emerald-500 */
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.1rem 0.3rem;
+            border-radius: 0.25rem;
+        }
+        .question-card {
+            transition: all 0.3s ease;
+        }
+        .input-correct {
+            border-color: #10b981 !important;
+            background-color: rgba(16, 185, 129, 0.05) !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        .input-incorrect {
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.05) !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-3xl mx-auto">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <div class="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-2xl mb-4">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight mb-2">Python User Input Quiz</h1>
+            <p class="text-slate-400" id="quiz-instructions"></p>
+        </header>
+
+        <!-- Quiz Container -->
+        <div id="quiz-container" class="space-y-6 mb-8">
+            <!-- Questions will be dynamically injected here -->
+        </div>
+
+        <!-- Submit Button & Score -->
+        <div class="sticky bottom-4 bg-slate-800/90 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 z-50">
+            <div id="score-display" class="hidden text-lg font-semibold flex items-center gap-2">
+                <span class="text-slate-300">Your Score:</span>
+                <span id="score-value" class="text-2xl text-blue-400">0/10</span>
+            </div>
+            <p id="progress-text" class="text-slate-400 text-sm">Answer all questions to finish.</p>
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <button id="download-btn" onclick="downloadReport()" class="hidden w-full sm:w-auto px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-slate-500/50 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download Report
+                </button>
+                <button id="check-btn" onclick="checkAllAnswers()" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors focus:outline-none focus:ring-4 focus:ring-blue-500/50 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Check My Answers
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden container for the report image generation -->
+    <div id="report-export-container" class="absolute left-[-9999px] top-[-9999px] bg-white text-slate-900 p-8 w-[800px]">
+        <!-- Content will be injected here before capture -->
+    </div>
+
+    <script>
+        // Expanded to 10 questions to meet requirements while strictly following the provided JSON structure
+        const quizData = {
+            "type": "text",
+            "inputLabel": "Write input code (e.g. name = input(\"...\")):",
+            "questions": [
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">name</span> and store it</span>",
+                    "correctCode": "name\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true,
+                    "notice": "name = input(\"Prompt\")"
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">age</span> and store it</span>",
+                    "correctCode": "age\\s*=\\s*int\\s*\\(\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true,
+                    "notice": "Remember to cast to int:\nage = int(input(\"...\"))"
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">city</span> and store it</span>",
+                    "correctCode": "city\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">score</span> (number) and store it</span>",
+                    "correctCode": "score\\s*=\\s*int\\s*\\(\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true,
+                    "notice": "Scores are numbers! Use int()"
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">hobby</span> and store it</span>",
+                    "correctCode": "hobby\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">school</span> and store it</span>",
+                    "correctCode": "school\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true
+                },
+                // Added 4 additional questions to reach the 10 total
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">favorite_color</span> and store it</span>",
+                    "correctCode": "favorite_color\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">height</span> (decimal number) and store it</span>",
+                    "correctCode": "height\\s*=\\s*float\\s*\\(\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true,
+                    "notice": "Use float() for decimal numbers!"
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their <span class=\"green-keyword\">pet_name</span> and store it</span>",
+                    "correctCode": "pet_name\\s*=\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true
+                },
+                {
+                    "html": "<span style=\"font-size:0.9rem\">Ask the user for their graduation <span class=\"green-keyword\">year</span> (number) and store it</span>",
+                    "correctCode": "year\\s*=\\s*int\\s*\\(\\s*input\\s*\\(\\s*[\"'][^\"']+[\"']\\s*\\)\\s*\\)",
+                    "useRegex": true,
+                    "triggerConsole": true,
+                    "notice": "Years should be cast to integers using int()"
+                }
+            ]
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('quiz-instructions').textContent = quizData.inputLabel;
+            renderQuestions();
+        });
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-container');
+            
+            quizData.questions.forEach((q, index) => {
+                const card = document.createElement('div');
+                card.className = "question-card bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-sm";
+                
+                const questionHeader = `
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-700 text-slate-300 rounded-lg text-sm font-bold">${index + 1}</span>
+                        <div class="text-slate-200">${q.html}</div>
+                    </div>
+                `;
+
+                const inputHtml = `
+                    <div class="relative group mt-4">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 font-mono text-sm">>>></div>
+                        <input 
+                            type="text" 
+                            id="input-${index}" 
+                            class="code-font w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-3 transition-colors outline-none" 
+                            placeholder='e.g., variable = input("Enter...")'
+                            autocomplete="off"
+                            spellcheck="false"
+                            oninput="debouncedCheck(${index})"
+                        >
+                        <!-- Status Icons -->
+                        <div id="icon-correct-${index}" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div id="icon-incorrect-${index}" class="hidden absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </div>
+                    </div>
+                `;
+
+                const feedbackHtml = `
+                    <div id="feedback-${index}" class="hidden mt-3 text-sm flex items-start gap-2 text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="whitespace-pre-line">${q.notice || 'Incorrect syntax. Check your variable name, function spelling, and quotes.'}</span>
+                    </div>
+                `;
+
+                card.innerHTML = questionHeader + inputHtml + feedbackHtml;
+                container.appendChild(card);
+            });
+        }
+
+        // Live Auto-marking
+        let timers = {};
+        function debouncedCheck(index) {
+            clearTimeout(timers[index]);
+            timers[index] = setTimeout(() => {
+                const inputVal = document.getElementById(`input-${index}`).value;
+                if(inputVal.trim() !== '') {
+                    validateSingle(index);
+                } else {
+                    resetVisuals(index);
+                }
+                updateProgress();
+            }, 500); // 500ms debounce
+        }
+
+        function validateSingle(index) {
+            const q = quizData.questions[index];
+            const inputEl = document.getElementById(`input-${index}`);
+            const val = inputEl.value.trim();
+            
+            // Construct strict regex adding ^ and $ to ensure exact match without trailing garbage code
+            const regex = new RegExp('^' + q.correctCode + '$');
+            const isCorrect = regex.test(val);
+
+            const iconCorrect = document.getElementById(`icon-correct-${index}`);
+            const iconIncorrect = document.getElementById(`icon-incorrect-${index}`);
+            const feedbackEl = document.getElementById(`feedback-${index}`);
+
+            if (isCorrect) {
+                inputEl.classList.remove('input-incorrect');
+                inputEl.classList.add('input-correct');
+                iconCorrect.classList.remove('hidden');
+                iconIncorrect.classList.add('hidden');
+                feedbackEl.classList.add('hidden');
+            } else {
+                inputEl.classList.remove('input-correct');
+                inputEl.classList.add('input-incorrect');
+                iconCorrect.classList.add('hidden');
+                iconIncorrect.classList.remove('hidden');
+                feedbackEl.classList.remove('hidden');
+            }
+
+            return isCorrect;
+        }
+
+        function resetVisuals(index) {
+            const inputEl = document.getElementById(`input-${index}`);
+            inputEl.classList.remove('input-correct', 'input-incorrect');
+            document.getElementById(`icon-correct-${index}`).classList.add('hidden');
+            document.getElementById(`icon-incorrect-${index}`).classList.add('hidden');
+            document.getElementById(`feedback-${index}`).classList.add('hidden');
+        }
+
+        function updateProgress() {
+            let answered = 0;
+            quizData.questions.forEach((_, index) => {
+                if (document.getElementById(`input-${index}`).value.trim() !== '') {
+                    answered++;
+                }
+            });
+            const progressText = document.getElementById('progress-text');
+            if (answered < quizData.questions.length) {
+                progressText.textContent = `${answered} / ${quizData.questions.length} answered`;
+                progressText.classList.remove('hidden');
+                document.getElementById('score-display').classList.add('hidden');
+            } else {
+                progressText.textContent = "All answered! Click check.";
+            }
+        }
+
+        // Check All Action
+        function checkAllAnswers() {
+            let score = 0;
+            quizData.questions.forEach((_, index) => {
+                const inputVal = document.getElementById(`input-${index}`).value.trim();
+                // Even if empty, validate it to trigger red outlines
+                if(validateSingle(index)) {
+                    score++;
+                }
+            });
+
+            // Update bottom bar UI
+            document.getElementById('progress-text').classList.add('hidden');
+            const scoreDisplay = document.getElementById('score-display');
+            const scoreValue = document.getElementById('score-value');
+            
+            scoreDisplay.classList.remove('hidden');
+            scoreValue.textContent = `${score}/${quizData.questions.length}`;
+            
+            if(score === quizData.questions.length) {
+                scoreValue.className = "text-2xl font-bold text-emerald-400";
+                confettiEffect(); // Small celebration!
+            } else if (score > 5) {
+                scoreValue.className = "text-2xl font-bold text-blue-400";
+            } else {
+                scoreValue.className = "text-2xl font-bold text-amber-400";
+            }
+            
+            // Show the download button once answers are checked
+            document.getElementById('download-btn').classList.remove('hidden');
+        }
+
+        function stripHtml(html) {
+            const tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+        }
+
+        async function downloadReport() {
+            const btn = document.getElementById('download-btn');
+            const originalText = btn.innerHTML;
+            
+            // Show loading state
+            btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Generating...';
+            btn.disabled = true;
+
+            let score = 0;
+            const rowsHtml = quizData.questions.map((q, index) => {
+                const inputVal = document.getElementById(`input-${index}`).value.trim();
+                const regex = new RegExp('^' + q.correctCode + '$');
+                const isCorrect = regex.test(inputVal);
+                
+                if(isCorrect) score++;
+
+                const statusColor = isCorrect ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold';
+                const statusText = isCorrect ? '✅ Correct' : '❌ Incorrect';
+                
+                let hintHtml = '';
+                if (!isCorrect && q.notice) {
+                    hintHtml = `<div class="text-xs text-red-500 mt-1 whitespace-pre-line">Hint: ${q.notice}</div>`;
+                }
+
+                return `
+                    <tr class="border-b border-slate-200">
+                        <td class="p-3 text-sm border-r border-slate-200">${index + 1}</td>
+                        <td class="p-3 text-sm font-medium border-r border-slate-200">${stripHtml(q.html)}</td>
+                        <td class="p-3 text-sm font-mono bg-slate-50 border-r border-slate-200 break-all">${inputVal || '<span class="text-slate-400 italic">No answer</span>'}</td>
+                        <td class="p-3 text-sm ${statusColor}">${statusText}${hintHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            const exportContainer = document.getElementById('report-export-container');
+            
+            // Build the table inside the hidden container
+            exportContainer.innerHTML = `
+                <div style="font-family: 'Inter', sans-serif;">
+                    <div class="mb-6 text-center">
+                        <h2 class="text-2xl font-bold text-slate-800">Python User Input Quiz - Results</h2>
+                        <p class="text-slate-500 mt-1">Date: ${new Date().toLocaleString()}</p>
+                        <div class="mt-4 inline-block ${score === quizData.questions.length ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-blue-100 text-blue-800 border-blue-200'} px-6 py-2 rounded-full text-xl font-bold border">
+                            Final Score: ${score} / ${quizData.questions.length}
+                        </div>
+                    </div>
+                    <table class="w-full text-left border-collapse border border-slate-300">
+                        <thead class="bg-slate-100 border-b border-slate-300">
+                            <tr>
+                                <th class="p-3 font-semibold text-slate-700 w-12 border-r border-slate-300">#</th>
+                                <th class="p-3 font-semibold text-slate-700 border-r border-slate-300">Question</th>
+                                <th class="p-3 font-semibold text-slate-700 border-r border-slate-300">Your Answer</th>
+                                <th class="p-3 font-semibold text-slate-700 w-48">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                    <div class="mt-6 text-center text-sm text-slate-400">
+                        Generated automatically to prevent tampering.
+                    </div>
+                </div>
+            `;
+
+            try {
+                // Wait briefly for the DOM to update and render the new elements
+                await new Promise(r => setTimeout(r, 100)); 
+                
+                // Capture the container as a canvas
+                const canvas = await html2canvas(exportContainer, {
+                    scale: 2, // 2x resolution for crisp text
+                    backgroundColor: '#ffffff',
+                    windowWidth: 800
+                });
+
+                // Convert to PNG and download
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Quiz_Results_" + new Date().getTime() + ".png";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } catch (err) {
+                console.error("Error generating image:", err);
+            } finally {
+                // Restore button state and cleanup
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                exportContainer.innerHTML = ''; 
+            }
+        }
+
+        // Simple visual effect for perfect score
+        function confettiEffect() {
+            const btn = document.getElementById('check-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🎉 Perfect Score! 🎉';
+            btn.classList.replace('bg-blue-600', 'bg-emerald-600');
+            btn.classList.replace('hover:bg-blue-500', 'hover:bg-emerald-500');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-emerald-600', 'bg-blue-600');
+                btn.classList.replace('hover:bg-emerald-500', 'hover:bg-blue-500');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
